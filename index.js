@@ -1,10 +1,11 @@
 const express = require("express");
 const morgan = require("morgan");
 const helmet = require("helmet");
+require('dotenv').config()
 const contactRouter = require("./routes/contact.route");
 
 require("./lib/db");
-const PORT = 3002;
+const PORT = process.env.PORT
 
 const app = express();
 app.use(morgan("tiny"));
