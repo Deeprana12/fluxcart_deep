@@ -7,7 +7,7 @@ module.exports = {
       const { email, phoneNumber } = data;
 
       const findQuery =
-        "SELECT * FROM Contact WHERE email = ? OR phoneNumber = ?";
+        "SELECT * FROM Contact WHERE email = ? OR phoneNumber = ? ORDER BY 'createdAt' LIMIT 1";
 
       const results = await new Promise((resolve, reject) => {
         connection.query(findQuery, [email, phoneNumber], (err, results) => {
@@ -149,7 +149,7 @@ module.exports = {
 
       const { email, phoneNumber, existingContact } = data;
 
-      const insertSecondaryQuery = 'INSERT INTO Contact (email, phoneNumber, linkPrecedence, linkedId) VALUES (?, ?, "secondary", ?)';
+      const insertSecondaryQuery = 'INSERT IGNORE INTO Contact (email, phoneNumber, linkPrecedence, linkedId) VALUES (?, ?, "secondary", ?)';
       
       const results = await new Promise((resolve, reject) => {
 
@@ -177,8 +177,8 @@ module.exports = {
 
     try {
       
-      const id = data;      
-      const secondaryQuery = 'SELECT * FROM Contact WHERE linkedId = ? OR id = ?';
+      const id = data;       
+      const secondaryQuery = 'SELECT * FROM Contact WHERE linkedId = ? OR id = ? ORDER BY "createdAt"';
 
       const results = await new Promise((resolve, reject) => {
         connection.query(secondaryQuery, [id, id], (secondaryErr, secondaryResults) => {

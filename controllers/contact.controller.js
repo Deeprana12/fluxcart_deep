@@ -1,4 +1,5 @@
 const contactModule = require("../modules/contact.module");
+const helper = require("../helper")
 
 module.exports = {
   addContact: async (req, res) => {
@@ -12,10 +13,10 @@ module.exports = {
           .json({ error: "At least one of email or phoneNumber is required" });
       }
       // else if(email && phoneNumber){
-      //   const userExistsStrictly = await contactModule?.findContactStrictly(data);
-      //   if(userExistsStrictly?.results?.length != 0){
-      //     console.log(userExistsStrictly)
-      //   }              
+        // const userExistsStrictly = await contactModule?.findContactStrictly(data);
+        // if(userExistsStrictly?.results?.length != 0){
+        //   console.log(userExistsStrictly)
+        // }              
       // }else if(email){
 
       // }else if(phoneNumber){
@@ -28,6 +29,11 @@ module.exports = {
       //     const 
       //   }
       // }
+
+      const userExistsStrictly = await contactModule?.findContactStrictly(data);
+      if(userExistsStrictly?.results?.length != 0){        
+        return res.status(200).json(await helper?.allUsers(email, phoneNumber, userData = userExistsStrictly?.results))
+      }
 
       const userExists = await contactModule?.findContact(data);
 
@@ -46,53 +52,34 @@ module.exports = {
 
       } else {
 
-        const existingContact = userExists?.results[0];        
+        const existingContact = userExists?.results[0];
+
         if(!email || !phoneNumber){
-
-          let id = existingContact?.linkPrecedence === "primary" 
-                        ? existingContact?.id : existingContact?.linkedId;
-
-          const results = await contactModule?.getAllRelatedContent(id)
-
-          const secondaryResults = results?.secondaryResults;
-          const secondaryEmails = secondaryResults.map((c) => c.email);
-          const secondaryPhoneNumbers = secondaryResults.map((c) => c.phoneNumber);
-          const secondaryContactIds = secondaryResults.map((c) => c.id);
-
-          let allEmails = email ? [email, ...secondaryEmails] : secondaryEmails;
-          allEmails = Array.from(new Set(allEmails))
-
-          let allPhoneNumbers = phoneNumber ? [phoneNumber, ...secondaryPhoneNumbers] : secondaryPhoneNumbers;
-          allPhoneNumbers = Array.from(new Set(allPhoneNumbers));
-          
-          return res.status(200).json({
-            contact: {
-              id: id,
-              emails: allEmails,
-              phoneNumbers: allPhoneNumbers,
-              secondaryContactIds,
-            },
-          });
-
+          return res.status(200)
+                  .json(await helper?.allUsers(email, phoneNumber, userData = existingContact));
         }else{
 
           if (existingContact?.userExists?.linkPrecedence === "secondary") {
-            
+
           } else {
-            const newSecondaryContactId = await contactModule?.createSecondaryContact({
+            await contactModule?.createSecondaryContact({
               email,
               phoneNumber,
               existingContact
             });
+            
+            // return res.status(200).json({
+            //   contact: {
+            //     primaryContactId: existingContact.id,
+            //     emails: [existingContact.email, email],
+            //     phoneNumbers: phoneNumber,
+            //     secondaryContactIds: [newSecondaryContactId],
+            //   },            
+            // });            
+            return res.status(200).json(
+              await helper?.allUsers(email, phoneNumber, userData = existingContact[0])
+            )
 
-            return res.status(200).json({
-              contact: {
-                primaryContactId: existingContact.id,
-                emails: [existingContact.email, email],
-                phoneNumbers: phoneNumber,
-                secondaryContactIds: [newSecondaryContactId],
-              },            
-            });
           }
         }
 
