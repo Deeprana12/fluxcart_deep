@@ -1,4 +1,6 @@
 const connection = require("../lib/db");
+const moment = require("moment");
+const current_timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
 
 module.exports = {
 
@@ -7,7 +9,7 @@ module.exports = {
       const { email, phoneNumber } = data;
 
       const findQuery =
-        "SELECT * FROM Contact WHERE email = ? OR phoneNumber = ? ORDER BY 'createdAt' LIMIT 1";
+        "SELECT * FROM Contact WHERE email = ? OR phoneNumber = ? ORDER BY 'createdAt', id ASC LIMIT 1";
 
       const results = await new Promise((resolve, reject) => {
         connection.query(findQuery, [email, phoneNumber], (err, results) => {
@@ -35,6 +37,37 @@ module.exports = {
 
       const findQuery =
         "SELECT * FROM Contact WHERE email = ? AND phoneNumber = ?";
+
+      const results = await new Promise((resolve, reject) => {
+        connection.query(findQuery, [email, phoneNumber], (err, results) => {
+          if (err) {
+            console.error("Error querying the database:", err);
+            reject(err);
+          } else {
+            const rowDataPacket = { results };
+            const jsonData = JSON.parse(JSON.stringify(rowDataPacket));
+            resolve(jsonData);
+          }
+        });
+      });
+
+      return results;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  findContactLoosly: async (data) => {
+    try {
+      const { email, phoneNumber } = data;
+
+      const findQuery =
+        `SELECT a.id, a.email, b.phoneNumber
+        FROM Contact a
+        JOIN Contact b
+        ON a.id <> b.id
+        WHERE a.email = ? AND b.phoneNumber = ?`;
 
       const results = await new Promise((resolve, reject) => {
         connection.query(findQuery, [email, phoneNumber], (err, results) => {
@@ -87,7 +120,7 @@ module.exports = {
     try {
       const id = data;
       const secondaryQuery =
-        'SELECT * FROM Contact WHERE linkedId = ? OR id = ? ORDER BY "createdAt"';
+        `SELECT * FROM Contact WHERE linkedId = ? OR id = ? ORDER BY "createdAt"`;
 
       const results = await new Promise((resolve, reject) => {
         connection.query(
@@ -112,11 +145,11 @@ module.exports = {
     }
   },
 
-  addPrimaryContact: async (data) => {
+  createPrimaryContact: async (data) => {
     try {
       const { email, phoneNumber } = data;
       const primaryInsertQuery =
-        'INSERT INTO Contact (email, phoneNumber, linkPrecedence) VALUES (?, ?, "primary")';
+        `INSERT INTO Contact (email, phoneNumber, linkPrecedence, createdAt) VALUES (?, ?, "primary", '${current_timestamp}')`;
 
       const results = await new Promise((resolve, reject) => {
         connection.query(
@@ -143,10 +176,42 @@ module.exports = {
 
   createSecondaryContact: async (data) => {
     try {
+      const { email, phoneNumber, existingContact } = data;    
+      const insertSecondaryQuery =
+        `INSERT INTO Contact (email, phoneNumber, linkPrecedence, linkedId, createdAt) VALUES (?, ?, "secondary", ?, '${current_timestamp}')`;
+
+      const results = await new Promise((resolve, reject) => {
+        connection.query(
+          insertSecondaryQuery,
+          [email, phoneNumber, existingContact?.linkedId ?? existingContact?.id],
+          (insertSecondaryErr, insertSecondaryResults) => {
+            if (insertSecondaryErr) {
+              console.error(
+                "Error creating a new secondary contact:",
+                insertSecondaryErr
+              );
+              reject(err);
+            } else {
+              const newSecondaryContactId = insertSecondaryResults.insertId;
+              resolve(newSecondaryContactId);
+            }
+          }
+        );
+      });
+
+      return results;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+
+  convertToSecondaryContact: async (data) => {
+    try {
       const { email, phoneNumber, existingContact } = data;
 
       const insertSecondaryQuery =
-        'INSERT IGNORE INTO Contact (email, phoneNumber, linkPrecedence, linkedId) VALUES (?, ?, "secondary", ?)';
+        `INSERT IGNORE INTO Contact (email, phoneNumber, linkPrecedence, linkedId, createdAt) VALUES (?, ?, "secondary", '${current_timestamp}')`;
 
       const results = await new Promise((resolve, reject) => {
         connection.query(

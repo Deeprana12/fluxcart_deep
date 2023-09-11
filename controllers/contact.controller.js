@@ -25,10 +25,18 @@ module.exports = {
         return res.status(200).json(await helper.allUsers(userData));
       }
 
+      const userExistsLoosly = await contactModule?.findContactLoosly(data);
+
+      if (userExistsLoosly.results.length !== 0) {
+        const userData = userExistsLoosly.results[0];
+        return res.status(200).json({"loosly":userData});
+        // await helper.allUsers(userData)
+      }
+
       const userExists = await contactModule.findContact(data);
 
       if (userExists.results.length === 0) {
-        const id = await contactModule.addPrimaryContact(data);
+        const id = await contactModule.createPrimaryContact(data);
 
         return res.status(200).json({
           contact: {
@@ -40,7 +48,7 @@ module.exports = {
         });
       } else {
         const existingContact = userExists.results[0];
-
+        console.log(existingContact);
         if (!email || !phoneNumber) {
           return res.status(200).json(await helper.allUsers(existingContact));
         } else {

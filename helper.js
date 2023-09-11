@@ -1,7 +1,7 @@
 const contactModule = require("./modules/contact.module");
 
 module.exports = {
-  allUsers: (async = async (userData) => {
+  allUsers: async (userData) => {
     let id =
       userData?.linkPrecedence === "primary"
         ? userData?.id
@@ -12,6 +12,7 @@ module.exports = {
     const secondaryResults = results?.secondaryResults;
     const secondaryEmails = secondaryResults.map((c) => c.email);
     const secondaryPhoneNumbers = secondaryResults.map((c) => c.phoneNumber);
+    
     const secondaryContactIds =
       userData?.linkPrecedence === "primary"
         ? secondaryResults.map((c) => c.id).filter((id) => id != userData?.id)
@@ -33,5 +34,5 @@ module.exports = {
         secondaryContactIds,
       },
     };
-  }),
+  },
 };
