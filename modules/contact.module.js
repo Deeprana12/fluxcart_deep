@@ -54,42 +54,13 @@ module.exports = {
       console.error(error);
       throw error;
     }
-  },  
-
-  findPrimaryContact: async (data) => {
-
-    try {
-      const { existingContact } = data;
-
-      const primaryQuery = 'SELECT * FROM Contact WHERE id = ?';
-
-      const results = await new Promise((resolve, reject) => {
-        connection.query(
-          primaryQuery,
-          [existingContact?.linkedId],
-          (err, results) => {
-            if (err) {
-              console.error("Error creating a new primary contact:", err);
-              reject(err);
-            } else {            
-              resolve(results);
-            }
-          }
-        );
-      });
-
-      return results;  
-    } catch (error) {
-      throw error;
-    }  
-
   },
 
-  findAllContacts: async (data) => {
+  findPrimaryContact: async (data) => {
     try {
       const { existingContact } = data;
 
-      const primaryQuery = 'SELECT * FROM Contact WHERE id = ?';
+      const primaryQuery = "SELECT * FROM Contact WHERE id = ?";
 
       const results = await new Promise((resolve, reject) => {
         connection.query(
@@ -99,22 +70,50 @@ module.exports = {
             if (err) {
               console.error("Error creating a new primary contact:", err);
               reject(err);
-            } else {            
+            } else {
               resolve(results);
             }
           }
         );
       });
 
-      return results;  
+      return results;
     } catch (error) {
       throw error;
-    } 
+    }
+  },
+
+  findAllRelatedContent: async (data) => {
+    try {
+      const id = data;
+      const secondaryQuery =
+        'SELECT * FROM Contact WHERE linkedId = ? OR id = ? ORDER BY "createdAt"';
+
+      const results = await new Promise((resolve, reject) => {
+        connection.query(
+          secondaryQuery,
+          [id, id],
+          (secondaryErr, secondaryResults) => {
+            if (secondaryErr) {
+              console.error("Error querying secondary contacts:", secondaryErr);
+              reject(secondaryErr);
+            } else {
+              const rowDataPacket = { secondaryResults };
+              const jsonData = JSON.parse(JSON.stringify(rowDataPacket));
+              resolve(jsonData);
+            }
+          }
+        );
+      });
+
+      return results;
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   addPrimaryContact: async (data) => {
     try {
-
       const { email, phoneNumber } = data;
       const primaryInsertQuery =
         'INSERT INTO Contact (email, phoneNumber, linkPrecedence) VALUES (?, ?, "primary")';
@@ -136,69 +135,43 @@ module.exports = {
       });
 
       return results;
-
     } catch (error) {
-      console.error(error)
-      res.status(400).json({ message: "Interval Server error" })
+      console.error(error);
+      res.status(400).json({ message: "Interval Server error" });
     }
   },
 
   createSecondaryContact: async (data) => {
-
     try {
-
       const { email, phoneNumber, existingContact } = data;
 
-      const insertSecondaryQuery = 'INSERT IGNORE INTO Contact (email, phoneNumber, linkPrecedence, linkedId) VALUES (?, ?, "secondary", ?)';
-      
+      const insertSecondaryQuery =
+        'INSERT IGNORE INTO Contact (email, phoneNumber, linkPrecedence, linkedId) VALUES (?, ?, "secondary", ?)';
+
       const results = await new Promise((resolve, reject) => {
-
-        connection.query(insertSecondaryQuery, [email, phoneNumber, existingContact.id], (insertSecondaryErr, insertSecondaryResults) => {
-          if (insertSecondaryErr) {
-            console.error('Error creating a new secondary contact:', insertSecondaryErr);
-            reject(err);
-          }else{
-            const newSecondaryContactId = insertSecondaryResults.insertId;
-            resolve(newSecondaryContactId)          
+        connection.query(
+          insertSecondaryQuery,
+          [email, phoneNumber, existingContact.id],
+          (insertSecondaryErr, insertSecondaryResults) => {
+            if (insertSecondaryErr) {
+              console.error(
+                "Error creating a new secondary contact:",
+                insertSecondaryErr
+              );
+              reject(err);
+            } else {
+              const newSecondaryContactId = insertSecondaryResults.insertId;
+              resolve(newSecondaryContactId);
+            }
           }
-        });
-
-      })
+        );
+      });
 
       return results;
-        
     } catch (error) {
       console.log(error);
-      throw error;      
+      throw error;
     }
   },
-
-  getAllRelatedContent: async (data) =>{
-
-    try {
-      
-      const id = data;       
-      const secondaryQuery = 'SELECT * FROM Contact WHERE linkedId = ? OR id = ? ORDER BY "createdAt"';
-
-      const results = await new Promise((resolve, reject) => {
-        connection.query(secondaryQuery, [id, id], (secondaryErr, secondaryResults) => {
-          if (secondaryErr) {
-            console.error('Error querying secondary contacts:', secondaryErr);
-            reject(secondaryErr)
-          }else{
-            const rowDataPacket = { secondaryResults };
-            const jsonData = JSON.parse(JSON.stringify(rowDataPacket));
-            resolve(jsonData);            
-          }
-        })
-      })
-
-      return results
-      
-    } catch (error) {
-      console.error(error);
-    }
-
-  }
 
 };
