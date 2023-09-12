@@ -5,6 +5,7 @@ require('dotenv').config()
 const contactRouter = require("./routes/contact.route");
 
 require("./lib/db");
+require("./triggers/contact.trigger")?.createTriggers();
 const PORT = process.env.PORT
 
 const app = express();

@@ -1,10 +1,6 @@
 const contactModule = require("../modules/contact.module");
 const helper = require("../helper");
-
-const handleError = (res, error) => {
-  console.error(error);
-  res.status(500).json({ error: error?.sqlMessage ?? "Internal Server Error" });
-};
+const constants = require('../constants')
 
 module.exports = {
   addContact: async (req, res) => {
@@ -15,7 +11,7 @@ module.exports = {
       if (!email && !phoneNumber) {
         return res
           .status(400)
-          .json({ error: "At least one of email or phoneNumber is required" });
+          .json({ error: constants?.REQUIRED_FIELD_ERROR });
       }
 
       if (email && phoneNumber) {

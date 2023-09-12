@@ -35,4 +35,11 @@ module.exports = {
       },
     };
   },
+
+  handleError : (res, error) => {
+    console.error(error);
+    res.status(500).json({ error: error?.sqlMessage ?? constants?.INTERNAL_SERVER_ERROR });
+  },
+  
+
 };
