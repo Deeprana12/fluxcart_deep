@@ -19,3 +19,13 @@ app.listen(PORT, () => {
 });
 
 app.use("/api", contactRouter);
+
+process.on('uncaughtException', (error) => {
+  console.log('[uncaughtException] shutting down server');
+  console.log(error);
+  app.close(()=>{
+    process.exit()
+  })
+})
+
+module.exports = app;

@@ -1,6 +1,5 @@
 const connection = require("../lib/db");
 const { promisify } = require("util");
-const helper = require("../helper");
 
 const query = promisify(connection.query).bind(connection);
 

@@ -1,5 +1,5 @@
 const contactModule = require("../modules/contact.module");
-const helper = require("../helper");
+const helper = require("../utils/helper");
 const constants = require('../constants')
 
 module.exports = {
@@ -67,7 +67,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      handleError(res, error);
+      helper?.handleError(res, error);
     }
   },
 };
