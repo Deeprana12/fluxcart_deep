@@ -1,5 +1,5 @@
-//helper
-const contactModule = require("./modules/contact.module");
+const contactModule = require("../modules/contact.module");
+const constants = require("../constants")
 
 module.exports = {
   allUsers: async (userData) => {

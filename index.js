@@ -14,9 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 
-app.listen(PORT, () => {
-  console.log(`Running on ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Running on ${PORT}`);
+// });
 
 app.use("/api", contactRouter);
 
